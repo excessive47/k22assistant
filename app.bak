@@ -1,0 +1,149 @@
+import os
+import json
+import sqlite3
+import numpy as np
+from openai import OpenAI
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
+
+client = OpenAI()  # API-Key aus ENV
+
+with open("knowledge.json", encoding="utf-8") as f:
+    knowledge = json.load(f)
+
+
+def init_db():
+    conn = sqlite3.connect("knowledge.db")
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS knowledge (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            frage TEXT,
+            antwort TEXT,
+            freitext TEXT,
+            kategorie TEXT,
+            embedding BLOB
+        )
+    """)
+    c.execute("SELECT COUNT(*) FROM knowledge")
+    if c.fetchone()[0] == 0:
+        print("Erzeuge Embeddings und befülle Wissensdatenbank...")
+        for entry in knowledge:
+            frage = entry.get("frage", "")
+            antwort = entry.get("antwort", "")
+            freitext = entry.get("freitext", "")
+            kategorie = entry.get("kategorie", "")
+            emb = client.embeddings.create(
+                input=frage,
+                model="text-embedding-3-small"
+            ).data[0].embedding
+            emb_bytes = np.array(emb, dtype=np.float32).tobytes()
+            c.execute(
+                "INSERT INTO knowledge (frage, antwort, freitext, kategorie, embedding) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (frage, antwort, freitext, kategorie, emb_bytes),
+            )
+        conn.commit()
+        print("Datenbank initialisiert!")
+    conn.close()
+
+
+def get_embedding(text: str) -> np.ndarray:
+    emb = client.embeddings.create(
+        input=text,
+        model="text-embedding-3-small"
+    ).data[0].embedding
+    return np.array(emb, dtype=np.float32)
+
+
+def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+    denom = np.linalg.norm(a) * np.linalg.norm(b)
+    if denom == 0:
+        return 0.0
+    return float(np.dot(a, b) / denom)
+
+
+def find_best_context(question: str):
+    q_emb = get_embedding(question)
+    conn = sqlite3.connect("knowledge.db")
+    c = conn.cursor()
+    c.execute("SELECT frage, antwort, freitext, kategorie, embedding FROM knowledge")
+
+    best_score = 0.0
+    best_context = None
+    for frage, antwort, freitext, kategorie, emb_bytes in c.fetchall():
+        emb = np.frombuffer(emb_bytes, dtype=np.float32)
+        score = cosine_similarity(q_emb, emb)
+        if score > best_score:
+            best_score = score
+            best_context = {
+                "frage": frage,
+                "antwort": antwort,
+                "freitext": freitext,
+                "kategorie": kategorie,
+                "score": score,
+            }
+    conn.close()
+    return best_context if best_score > 0.65 else None
+
+
+def append_qa_to_file(payload, response, filename="conversation_log.json"):
+    new_entry = {
+        "question": payload.get("question"),
+        "context": response.get("context"),
+    }
+    if os.path.exists(filename):
+        with open(filename, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else:
+        data = []
+    data.append(new_entry)
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def ask_openai(question: str, context=None) -> str:
+    if context:
+        return context["antwort"]
+
+    prompt = (
+        "Du bist ein digitaler Assistent, der ausschließlich Fragen rund um das Schlaflabor beantwortet. "
+        "Wenn eine Frage nichts mit dem Schlaflabor zu tun hat, antworte höflich: "
+        "'Ich beantworte nur Fragen zum Schlaflabor.'\n"
+        f"Frage: {question}\nAntworte kurz, klar und verständlich."
+    )
+
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=200,
+    )
+    return response.choices[0].message.content.strip()
+
+
+app = Flask(__name__, static_folder="static")
+CORS(app)
+
+
+@app.route("/chatbot", methods=["POST"])
+def chatbot():
+    data = request.json or {}
+    question = data.get("question", "").strip()
+    if not question:
+        return jsonify({"answer": "Bitte stelle eine Frage."}), 400
+
+    context = find_best_context(question)
+    answer = ask_openai(question, context)
+    response_data = {"answer": answer, "context": context}
+    append_qa_to_file(data, response_data)
+    return jsonify(response_data)
+
+
+@app.route("/", methods=["GET"])
+def index():
+    return send_from_directory("static", "index.html")
+
+
+if __name__ == "__main__":
+    init_db()
+    app.run(debug=True)

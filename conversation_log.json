@@ -1,0 +1,97 @@
+[
+  {
+    "question": "Was ist eine Polygraphie und was ist eine Polysomnographie",
+    "answer": "Eine Polygraphie ist eine ambulante Voruntersuchung, bei der wichtige Vitalparameter während des Schlafs zu Hause aufgezeichnet werden. Die Polysomnographie ist die ausführlichere Untersuchung im Schlaflabor mit zusätzlichen Messungen, wie z. B. Gehirnströmen (EEG). <a href='https://youtu.be/XEzGdDn1Uv8' target='_blank'>So wird Schlafapnoe diagnostiziert.</a> ",
+    "context": {
+      "frage": "Was ist eine Polygraphie und was ist eine Polysomnographie",
+      "antwort": "Eine Polygraphie ist eine ambulante Voruntersuchung, bei der wichtige Vitalparameter während des Schlafs zu Hause aufgezeichnet werden. Die Polysomnographie ist die ausführlichere Untersuchung im Schlaflabor mit zusätzlichen Messungen, wie z. B. Gehirnströmen (EEG). <a href='https://youtu.be/XEzGdDn1Uv8' target='_blank'>So wird Schlafapnoe diagnostiziert.</a> ",
+      "freitext": "",
+      "kategorie": "Medizin",
+      "score": 1.0
+    }
+  },
+  {
+    "question": "Was ist eine Polygraphie",
+    "answer": "Eine Polygraphie ist eine ambulante Voruntersuchung, bei der wichtige Vitalparameter während des Schlafs zu Hause aufgezeichnet werden. Die Polysomnographie ist die ausführlichere Untersuchung im Schlaflabor mit zusätzlichen Messungen, wie z. B. Gehirnströmen (EEG). <a href='https://youtu.be/XEzGdDn1Uv8' target='_blank'>So wird Schlafapnoe diagnostiziert.</a> ",
+    "context": {
+      "frage": "Was ist eine Polygraphie und was ist eine Polysomnographie",
+      "antwort": "Eine Polygraphie ist eine ambulante Voruntersuchung, bei der wichtige Vitalparameter während des Schlafs zu Hause aufgezeichnet werden. Die Polysomnographie ist die ausführlichere Untersuchung im Schlaflabor mit zusätzlichen Messungen, wie z. B. Gehirnströmen (EEG). <a href='https://youtu.be/XEzGdDn1Uv8' target='_blank'>So wird Schlafapnoe diagnostiziert.</a> ",
+      "freitext": "",
+      "kategorie": "Medizin",
+      "score": 0.7950464487075806
+    }
+  },
+  {
+    "context": {
+      "frage": "Was mache ich, wenn ich nachts nicht einschlafen kann",
+      "antwort": "Das ist kein Problem. Viele Patienten schlafen im Schlaflabor schlechter. Die Untersuchung ist trotzdem auswertbar.",
+      "freitext": "",
+      "kategorie": "Allgemein",
+      "score": 0.9999995231628418
+    }
+  },
+  {
+    "question": "Was mache ich, wenn ich nachts nicht einschlafen kann",
+    "context": {
+      "frage": "Was mache ich, wenn ich nachts nicht einschlafen kann",
+      "antwort": "Das ist kein Problem. Viele Patienten schlafen im Schlaflabor schlechter. Die Untersuchung ist trotzdem auswertbar.",
+      "freitext": "",
+      "kategorie": "Allgemein",
+      "score": 0.9999995231628418
+    }
+  },
+  {
+    "question": "was ist eine polygraphie",
+    "context": {
+      "frage": "Was ist eine Polygraphie und was ist eine Polysomnographie",
+      "antwort": "Eine Polygraphie ist eine ambulante Voruntersuchung, bei der wichtige Vitalparameter während des Schlafs zu Hause aufgezeichnet werden. Die Polysomnographie ist die ausführlichere Untersuchung im Schlaflabor mit zusätzlichen Messungen, wie z. B. Gehirnströmen (EEG). <a href='https://youtu.be/XEzGdDn1Uv8' target='_blank'>So wird Schlafapnoe diagnostiziert.</a> ",
+      "freitext": "",
+      "kategorie": "Medizin",
+      "score": 0.7707823514938354
+    }
+  },
+  {
+    "question": "Welche Unterlagen muss ich vorab einreichen, um einen Termin im Schlaflabor zu bekommen",
+    "context": null
+  },
+  {
+    "question": "Welche Unterlagen muss ich vorab einreichen, um einen Termin im Schlaflabor zu bekommen",
+    "context": null
+  },
+  {
+    "question": "Welche Unterlagen muss ich vorab einreichen, um einen Termin im Schlaflabor zu bekommen",
+    "context": null
+  },
+  {
+    "question": "Welche Unterlagen muss ich vorab einreichen, um einen Termin im Schlaflabor zu bekommen",
+    "context": null
+  },
+  {
+    "question": "Welche Unterlagen muss ich vorab einreichen, um einen Termin im Schlaflabor zu bekommen",
+    "context": null
+  },
+  {
+    "question": "Welche Unterlagen muss ich vorab einreichen, um einen Termin im Schlaflabor zu bekommen",
+    "context": null
+  },
+  {
+    "question": "Welche Unterlagen muss ich vorab einreichen, um einen Termin im Schlaflabor zu bekommen",
+    "context": {
+      "frage": "Warum ist eine Untersuchung im Schlaflabor notwendig",
+      "antwort": "Eine Untersuchung im Schlaflabor ist sinnvoll, wenn der Verdacht auf eine behandlungsbedürftige Schlafstörung besteht und ambulante Untersuchungen keine ausreichende Diagnose ermöglicht haben.",
+      "freitext": "",
+      "kategorie": "Medizin",
+      "score": 0.6966347694396973
+    }
+  },
+  {
+    "question": "Welche Unterlagen muss ich vorab einreichen, um einen Termin im Schlaflabor zu bekommen",
+    "context": {
+      "frage": "Warum ist eine Untersuchung im Schlaflabor notwendig",
+      "antwort": "Eine Untersuchung im Schlaflabor ist sinnvoll, wenn der Verdacht auf eine behandlungsbedürftige Schlafstörung besteht und ambulante Untersuchungen keine ausreichende Diagnose ermöglicht haben.",
+      "freitext": "",
+      "kategorie": "Medizin",
+      "score": 0.6966347694396973
+    }
+  }
+]

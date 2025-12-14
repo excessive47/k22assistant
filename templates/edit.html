@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Q&A bearbeiten</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container py-4">
+        <h3 class="mb-3">Q&A bearbeiten</h3>
+        <form method="post" class="row g-3">
+            <div class="col-5">
+                <input type="text" class="form-control" name="frage" value="{{ qa['frage'] }}" required>
+            </div>
+            <div class="col-5">
+                <input type="text" class="form-control" name="antwort" value="{{ qa['antwort'] }}" required>
+            </div>
+            <div class="col-2">
+                <button class="btn btn-primary w-100" type="submit">Speichern</button>
+            </div>
+        </form>
+        <a href="{{ url_for('index') }}" class="btn btn-link mt-3">Zurück</a>
+    </div>
+</body>
+
+</html>

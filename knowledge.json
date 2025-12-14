@@ -1,0 +1,32 @@
+[
+  {
+    "antwort": "Das ist kein Problem. Viele Patienten schlafen im Schlaflabor schlechter. Die Untersuchung ist trotzdem auswertbar.",
+    "frage": "Was mache ich, wenn ich nachts nicht einschlafen kann",
+    "freitext": "",
+    "kategorie": "Allgemein"
+  },
+  {
+    "antwort": "Eine Untersuchung im Schlaflabor ist sinnvoll, wenn der Verdacht auf eine behandlungsbedürftige Schlafstörung besteht und ambulante Untersuchungen keine ausreichende Diagnose ermöglicht haben.",
+    "frage": "Warum ist eine Untersuchung im Schlaflabor notwendig",
+    "freitext": "",
+    "kategorie": "Medizin"
+  },
+  {
+    "antwort": "Eine Polygraphie ist eine ambulante Voruntersuchung, bei der wichtige Vitalparameter während des Schlafs zu Hause aufgezeichnet werden. Die Polysomnographie ist die ausführlichere Untersuchung im Schlaflabor mit zusätzlichen Messungen, wie z. B. Gehirnströmen (EEG). <a href='https://youtu.be/XEzGdDn1Uv8' target='_blank'>So wird Schlafapnoe diagnostiziert.</a> ",
+    "frage": "Was ist eine Polygraphie und was ist eine Polysomnographie",
+    "freitext": "",
+    "kategorie": "Medizin"
+  },
+  {
+    "antwort": "Für einen Termin im Schlaflabor benötigen wir vorab folgende Unterlagen:\r\n– Eine aktuelle Überweisung von Ihrem Hausarzt oder überweisenden Arzt\r\n– Den Befundbericht einer bereits durchgeführten Schlafmessung (Polygraphie)\r\n– Die unterschriebene Vereinbarung zur Kostenregelung bei Terminversäumnis. <a href='https://www.dielunge.de/schlaflabor/Ausfallhonorar.pdf' target='_blank'>Hier herunterladen</a>",
+    "frage": "Welche Unterlagen muss ich vorab einreichen, um einen Termin im Schlaflabor zu bekommen",
+    "freitext": "",
+    "kategorie": "Vorbereitung"
+  },
+  {
+    "antwort": "Eine Polygraphie ist eine ambulante Voruntersuchung, bei der wichtige Vitalparameter wie Atmung und Sauerstoffsättigung während des Schlafs zu Hause gemessen werden.\r\nSie ist notwendig, um erste Hinweise auf eine Schlafstörung zu erhalten und festzustellen, ob eine weiterführende Untersuchung im Schlaflabor erforderlich ist.",
+    "frage": "Was ist eine Polygraphie, und warum muss sie vorab durchgeführt werden",
+    "freitext": "",
+    "kategorie": "Vorbereitung"
+  }
+]
