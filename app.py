@@ -337,6 +337,11 @@ def admin_get_knowledge(item_id: int):
 def index():
     return send_from_directory("static", "index.html")
 
+@app.route("/admin", methods=["GET"])
+def admin_ui():
+    return send_from_directory("static", "admin.html")
+
+
 # -----------------------------
 # Start
 # -----------------------------
@@ -345,3 +350,4 @@ if __name__ == "__main__":
     # debug nur lokal aktivieren: FLASK_DEBUG=1
     debug = os.getenv("FLASK_DEBUG", "0") == "1"
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=debug)
+
