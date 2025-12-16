@@ -120,6 +120,18 @@ def init_db():
         )
     """)
 
+        # --- Migration: falls alte Tabelle ohne "id" existiert ---
+    c.execute("PRAGMA table_info(knowledge)")
+    cols = [row[1] for row in c.fetchall()]  # row[1] = name
+
+    if "id" not in cols:
+        print("Migriere alte knowledge-Tabelle: füge id hinzu...")
+        c.execute("ALTER TABLE knowledge ADD COLUMN id INTEGER")
+        # Werte befüllen (rowid ist immer da)
+        c.execute("UPDATE knowledge SET id = rowid WHERE id IS NULL")
+        conn.commit()
+
+
     c.execute("SELECT COUNT(*) FROM knowledge")
     count = c.fetchone()[0]
 
