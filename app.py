@@ -39,6 +39,24 @@ CORS(app)  # optional: später auf Domains einschränken
 # in-memory rate-limit store: {ip: [timestamps]}
 _rl_store: Dict[str, List[float]] = {}
 
+# --- oben bei Konfiguration ergänzen ---
+ADMIN_API_KEY = os.getenv("K22BOT_ADMIN_API_KEY", "")  # unbedingt setzen!
+
+def require_admin(req) -> bool:
+    # Header: X-Admin-Key: <key>
+    key = req.headers.get("X-Admin-Key", "")
+    return bool(ADMIN_API_KEY) and key == ADMIN_API_KEY
+
+
+def db_query(sql: str, params: tuple = ()) -> List[Dict[str, Any]]:
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute(sql, params)
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
 
 # -----------------------------
 # Hilfsfunktionen
@@ -263,11 +281,61 @@ def chatbot():
         "context": used_contexts
     })
 
+@app.route("/admin/knowledge", methods=["GET"])
+def admin_list_knowledge():
+    if not require_admin(request):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # optional: ?q=suche&cat=Allgemein&limit=50&offset=0
+    q = (request.args.get("q") or "").strip()
+    cat = (request.args.get("cat") or "").strip()
+    limit = min(int(request.args.get("limit", "50")), 200)
+    offset = max(int(request.args.get("offset", "0")), 0)
+
+    where = []
+    params: List[Any] = []
+
+    if q:
+        where.append("(frage LIKE ? OR antwort LIKE ? OR freitext LIKE ?)")
+        like = f"%{q}%"
+        params.extend([like, like, like])
+
+    if cat:
+        where.append("kategorie = ?")
+        params.append(cat)
+
+    where_sql = (" WHERE " + " AND ".join(where)) if where else ""
+    sql = f"""
+        SELECT id, frage, antwort, freitext, kategorie
+        FROM knowledge
+        {where_sql}
+        ORDER BY id DESC
+        LIMIT ? OFFSET ?
+    """
+    params.extend([limit, offset])
+
+    rows = db_query(sql, tuple(params))
+    return jsonify({"items": rows, "limit": limit, "offset": offset})
+
+
+@app.route("/admin/knowledge/<int:item_id>", methods=["GET"])
+def admin_get_knowledge(item_id: int):
+    if not require_admin(request):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    rows = db_query(
+        "SELECT id, frage, antwort, freitext, kategorie FROM knowledge WHERE id = ?",
+        (item_id,),
+    )
+    if not rows:
+        return jsonify({"error": "Not found"}), 404
+    return jsonify(rows[0])
+
+
 
 @app.route("/", methods=["GET"])
 def index():
     return send_from_directory("static", "index.html")
-
 
 # -----------------------------
 # Start
