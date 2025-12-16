@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>K22Bot Admin</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 24px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+    label { display:block; font-size: 12px; opacity: .8; margin-bottom: 4px; }
+    input { padding: 10px; min-width: 220px; }
+    button { padding: 10px 14px; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { border-bottom: 1px solid #ddd; padding: 10px; vertical-align: top; }
+    th { text-align: left; }
+    .muted { opacity: .7; font-size: 12px; }
+    pre { white-space: pre-wrap; background: #f6f6f6; padding: 12px; border-radius: 8px; }
+    .card { margin-top: 16px; border: 1px solid #ddd; border-radius: 10px; padding: 12px; }
+    .danger { color: #a00; }
+  </style>
+</head>
+<body>
+  <h1>K22Bot Admin</h1>
+  <p class="muted">Nur lesender Zugriff auf <code>knowledge.db</code>. API-Key wird lokal im Browser gespeichert (sessionStorage).</p>
+
+  <div class="row">
+    <div>
+      <label>Admin-Key (Header: X-Admin-Key)</label>
+      <input id="key" type="password" placeholder="DEIN_STARKER_KEY" />
+    </div>
+    <div>
+      <label>Suche (q)</label>
+      <input id="q" type="text" placeholder="z. B. cpap, polygrafie..." />
+    </div>
+    <div>
+      <label>Kategorie (cat)</label>
+      <input id="cat" type="text" placeholder="z. B. Allgemein" />
+    </div>
+    <div>
+      <label>Limit</label>
+      <input id="limit" type="number" value="50" min="1" max="200" />
+    </div>
+    <div>
+      <button id="btnLoad">Laden</button>
+      <button id="btnPrev">◀</button>
+      <button id="btnNext">▶</button>
+    </div>
+  </div>
+
+  <div id="status" class="muted" style="margin-top:10px;"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:80px;">ID</th>
+        <th>Frage</th>
+        <th>Kategorie</th>
+        <th style="width:160px;">Aktion</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <div id="detail" class="card" style="display:none;"></div>
+
+  <script>
+    let offset = 0;
+
+    const elKey   = document.getElementById("key");
+    const elQ     = document.getElementById("q");
+    const elCat   = document.getElementById("cat");
+    const elLimit = document.getElementById("limit");
+    const elTbody = document.getElementById("tbody");
+    const elStatus= document.getElementById("status");
+    const elDetail= document.getElementById("detail");
+
+    // Key aus sessionStorage laden
+    elKey.value = sessionStorage.getItem("k22_admin_key") || "";
+    elKey.addEventListener("input", () => {
+      sessionStorage.setItem("k22_admin_key", elKey.value);
+    });
+
+    async function apiGet(path) {
+      const key = elKey.value.trim();
+      const res = await fetch(path, {
+        headers: { "X-Admin-Key": key }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data?.error || ("HTTP " + res.status);
+        throw new Error(msg);
+      }
+      return data;
+    }
+
+    function esc(s) {
+      return (s ?? "").toString()
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
+
+    async function loadList() {
+      elDetail.style.display = "none";
+      elDetail.innerHTML = "";
+      elTbody.innerHTML = "";
+      elStatus.textContent = "Lade…";
+
+      const q = encodeURIComponent(elQ.value.trim());
+      const cat = encodeURIComponent(elCat.value.trim());
+      const limit = Math.min(Math.max(parseInt(elLimit.value || "50", 10), 1), 200);
+
+      const params = new URLSearchParams();
+      if (q) params.set("q", elQ.value.trim());
+      if (cat) params.set("cat", elCat.value.trim());
+      params.set("limit", String(limit));
+      params.set("offset", String(offset));
+
+      try {
+        const data = await apiGet("/admin/knowledge?" + params.toString());
+        const items = data.items || [];
+
+        elStatus.textContent = `Ergebnisse: ${items.length} | Offset: ${offset} | Limit: ${limit}`;
+
+        if (!items.length) {
+          elTbody.innerHTML = `<tr><td colspan="4" class="muted">Keine Treffer.</td></tr>`;
+          return;
+        }
+
+        elTbody.innerHTML = items.map(it => `
+          <tr>
+            <td>${esc(it.id)}</td>
+            <td>${esc(it.frage).slice(0, 160)}${(it.frage && it.frage.length>160) ? "…" : ""}</td>
+            <td>${esc(it.kategorie || "")}</td>
+            <td><button data-id="${esc(it.id)}">Ansehen</button></td>
+          </tr>
+        `).join("");
+
+        elTbody.querySelectorAll("button[data-id]").forEach(btn => {
+          btn.addEventListener("click", () => showDetail(btn.getAttribute("data-id")));
+        });
+
+      } catch (e) {
+        elStatus.innerHTML = `<span class="danger">Fehler:</span> ${esc(e.message)}`;
+        elTbody.innerHTML = `<tr><td colspan="4" class="muted">—</td></tr>`;
+      }
+    }
+
+    async function showDetail(id) {
+      elStatus.textContent = "Lade Detail…";
+      try {
+        const it = await apiGet("/admin/knowledge/" + encodeURIComponent(id));
+        elDetail.style.display = "block";
+        elDetail.innerHTML = `
+          <div class="muted">ID: ${esc(it.id)} | Kategorie: ${esc(it.kategorie || "")}</div>
+          <h3>Frage</h3>
+          <pre>${esc(it.frage || "")}</pre>
+          <h3>Antwort</h3>
+          <pre>${esc(it.antwort || "")}</pre>
+          ${(it.freitext && it.freitext.trim()) ? `<h3>Freitext</h3><pre>${esc(it.freitext)}</pre>` : ""}
+        `;
+        elStatus.textContent = "OK";
+      } catch (e) {
+        elStatus.innerHTML = `<span class="danger">Fehler:</span> ${esc(e.message)}`;
+      }
+    }
+
+    document.getElementById("btnLoad").addEventListener("click", () => { offset = 0; loadList(); });
+    document.getElementById("btnPrev").addEventListener("click", () => { offset = Math.max(0, offset - parseInt(elLimit.value||"50",10)); loadList(); });
+    document.getElementById("btnNext").addEventListener("click", () => { offset += parseInt(elLimit.value||"50",10); loadList(); });
+
+    // Enter in Suche
+    [elQ, elCat].forEach(el => el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { offset = 0; loadList(); }
+    }));
+
+    // initial laden, wenn Key vorhanden
+    if (elKey.value.trim()) loadList();
+  </script>
+</body>
+</html>
