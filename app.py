@@ -31,6 +31,9 @@ RAG_THRESHOLD = float(os.getenv("K22BOT_RAG_THRESHOLD", "0.68"))
 RATE_LIMIT_WINDOW_SEC = int(os.getenv("K22BOT_RL_WINDOW_SEC", "60"))
 RATE_LIMIT_MAX_REQ = int(os.getenv("K22BOT_RL_MAX_REQ", "30"))
 
+# Admin
+ADMIN_API_KEY = os.getenv("K22BOT_ADMIN_API_KEY", "")  # unbedingt setzen!
+
 client = OpenAI()  # API-Key aus ENV (OPENAI_API_KEY)
 
 app = Flask(__name__, static_folder="static")
@@ -39,11 +42,14 @@ CORS(app)  # optional: später auf Domains einschränken
 # in-memory rate-limit store: {ip: [timestamps]}
 _rl_store: Dict[str, List[float]] = {}
 
-# --- oben bei Konfiguration ergänzen ---
-ADMIN_API_KEY = os.getenv("K22BOT_ADMIN_API_KEY", "")  # unbedingt setzen!
+# DB init one-time flag (wichtig für Gunicorn/Heroku)
+_db_ready = False
 
+
+# -----------------------------
+# Admin/Auth + DB Helper
+# -----------------------------
 def require_admin(req) -> bool:
-    # Header: X-Admin-Key: <key>
     key = req.headers.get("X-Admin-Key", "")
     return bool(ADMIN_API_KEY) and key == ADMIN_API_KEY
 
@@ -56,6 +62,14 @@ def db_query(sql: str, params: tuple = ()) -> List[Dict[str, Any]]:
     rows = cur.fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+def db_exec(sql: str, params: tuple = ()) -> None:
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(sql, params)
+    conn.commit()
+    conn.close()
 
 
 # -----------------------------
@@ -85,7 +99,6 @@ def sha256_short(text: str, n: int = 12) -> str:
 def rate_limit_ok(ip: str) -> bool:
     now = time.time()
     bucket = _rl_store.get(ip, [])
-    # nur Requests im Fenster behalten
     bucket = [t for t in bucket if now - t <= RATE_LIMIT_WINDOW_SEC]
     if len(bucket) >= RATE_LIMIT_MAX_REQ:
         _rl_store[ip] = bucket
@@ -109,6 +122,7 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
+    # Tabelle anlegen (neues Schema)
     c.execute("""
         CREATE TABLE IF NOT EXISTS knowledge (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -120,20 +134,23 @@ def init_db():
         )
     """)
 
-        # --- Migration: falls alte Tabelle ohne "id" existiert ---
+    # Migration: falls alte Tabelle existiert und kein "id" hat
     c.execute("PRAGMA table_info(knowledge)")
-    cols = [row[1] for row in c.fetchall()]  # row[1] = name
+    cols = [row[1] for row in c.fetchall()]
 
     if "id" not in cols:
         print("Migriere alte knowledge-Tabelle: füge id hinzu...")
         c.execute("ALTER TABLE knowledge ADD COLUMN id INTEGER")
-        # Werte befüllen (rowid ist immer da)
         c.execute("UPDATE knowledge SET id = rowid WHERE id IS NULL")
         conn.commit()
 
-
-    c.execute("SELECT COUNT(*) FROM knowledge")
-    count = c.fetchone()[0]
+    # Befüllen wenn leer
+    try:
+        c.execute("SELECT COUNT(*) FROM knowledge")
+        count = c.fetchone()[0]
+    except sqlite3.OperationalError:
+        # Falls irgendwas am Schema sehr alt ist, fallback: neu erstellen
+        count = 0
 
     if count == 0:
         print("Erzeuge Embeddings und befülle Wissensdatenbank...")
@@ -157,6 +174,16 @@ def init_db():
         print(f"Datenbank vorhanden ({count} Einträge).")
 
     conn.close()
+
+
+@app.before_request
+def ensure_db_ready():
+    # wichtig für Gunicorn/Heroku: init_db() wird sonst nie ausgeführt
+    global _db_ready
+    if _db_ready:
+        return
+    init_db()
+    _db_ready = True
 
 
 def find_top_contexts(question: str, k: int = TOP_K) -> List[Dict[str, Any]]:
@@ -197,7 +224,6 @@ def ask_openai(question: str, contexts: Optional[List[Dict[str, Any]]] = None) -
     messages = [{"role": "system", "content": system}]
 
     if contexts:
-        # nur die wichtigsten Infos als Kontext, nicht endlos
         ctx_lines = []
         for c in contexts:
             line = f"- Frage: {c.get('frage','')}\n  Antwort: {c.get('antwort','')}"
@@ -248,7 +274,6 @@ def append_log(question: str, best: Optional[Dict[str, Any]], mode: str):
         with open(LOG_PATH, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception:
-        # Logging darf den Bot nicht killen
         pass
 
 
@@ -270,7 +295,6 @@ def chatbot():
     best = contexts[0] if contexts else None
     best_score = float(best["score"]) if best else 0.0
 
-    # Entscheidung
     if best_score >= DIRECT_ANSWER_THRESHOLD:
         answer = best["antwort"]
         mode = "direct"
@@ -293,12 +317,12 @@ def chatbot():
         "context": used_contexts
     })
 
-@app.route("/admin/knowledge", methods=["GET"])
+
+@app.route("/admin/knowledge", methods=["GET"], strict_slashes=False)
 def admin_list_knowledge():
     if not require_admin(request):
         return jsonify({"error": "Unauthorized"}), 401
 
-    # optional: ?q=suche&cat=Allgemein&limit=50&offset=0
     q = (request.args.get("q") or "").strip()
     cat = (request.args.get("cat") or "").strip()
     limit = min(int(request.args.get("limit", "50")), 200)
@@ -317,11 +341,13 @@ def admin_list_knowledge():
         params.append(cat)
 
     where_sql = (" WHERE " + " AND ".join(where)) if where else ""
+
+    # Robust: COALESCE(id,rowid) + ORDER BY rowid, damit alte DBs ohne id laufen
     sql = f"""
-        SELECT id, frage, antwort, freitext, kategorie
+        SELECT COALESCE(id, rowid) as id, frage, antwort, freitext, kategorie
         FROM knowledge
         {where_sql}
-        ORDER BY id DESC
+        ORDER BY rowid DESC
         LIMIT ? OFFSET ?
     """
     params.extend([limit, offset])
@@ -330,13 +356,15 @@ def admin_list_knowledge():
     return jsonify({"items": rows, "limit": limit, "offset": offset})
 
 
-@app.route("/admin/knowledge/<int:item_id>", methods=["GET"])
+@app.route("/admin/knowledge/<int:item_id>", methods=["GET"], strict_slashes=False)
 def admin_get_knowledge(item_id: int):
     if not require_admin(request):
         return jsonify({"error": "Unauthorized"}), 401
 
+    # Robust: id kann fehlen -> dann rowid matchen
     rows = db_query(
-        "SELECT id, frage, antwort, freitext, kategorie FROM knowledge WHERE id = ?",
+        "SELECT COALESCE(id, rowid) as id, frage, antwort, freitext, kategorie "
+        "FROM knowledge WHERE COALESCE(id, rowid) = ?",
         (item_id,),
     )
     if not rows:
@@ -344,22 +372,39 @@ def admin_get_knowledge(item_id: int):
     return jsonify(rows[0])
 
 
+@app.route("/admin/diag", methods=["GET"], strict_slashes=False)
+def admin_diag():
+    if not require_admin(request):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("PRAGMA table_info(knowledge)")
+    cols = [{"cid": r[0], "name": r[1], "type": r[2]} for r in c.fetchall()]
+    conn.close()
+
+    return jsonify({
+        "db_path": DB_PATH,
+        "knowledge_json": KNOWLEDGE_JSON,
+        "log_path": LOG_PATH,
+        "columns": cols
+    })
+
 
 @app.route("/", methods=["GET"])
 def index():
     return send_from_directory("static", "index.html")
 
-@app.route("/admin", methods=["GET"])
+
+@app.route("/admin", methods=["GET"], strict_slashes=False)
 def admin_ui():
     return send_from_directory("static", "admin.html")
 
 
 # -----------------------------
-# Start
+# Start (nur lokal)
 # -----------------------------
 if __name__ == "__main__":
     init_db()
-    # debug nur lokal aktivieren: FLASK_DEBUG=1
     debug = os.getenv("FLASK_DEBUG", "0") == "1"
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=debug)
-
