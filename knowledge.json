@@ -1,32 +1,207 @@
 [
   {
-    "antwort": "Das ist kein Problem. Viele Patienten schlafen im Schlaflabor schlechter. Die Untersuchung ist trotzdem auswertbar.",
-    "frage": "Was mache ich, wenn ich nachts nicht einschlafen kann",
+    "frage": "Wann muss ich mich am Tag der Untersuchung im Schlaflabor anmelden",
+    "antwort": "Bitte melde dich am Untersuchungstag um 18:00 Uhr an der Anmeldung des St. Bernhard Hospitals an.",
+    "freitext": "",
+    "kategorie": "Ablauf"
+  },
+  {
+    "frage": "Wo findet die Untersuchung im Schlaflabor statt",
+    "antwort": "Die Untersuchung findet im St. Bernhard Hospital in Kamp-Lintfort statt.",
     "freitext": "",
     "kategorie": "Allgemein"
   },
   {
-    "antwort": "Eine Untersuchung im Schlaflabor ist sinnvoll, wenn der Verdacht auf eine behandlungsbedürftige Schlafstörung besteht und ambulante Untersuchungen keine ausreichende Diagnose ermöglicht haben.",
-    "frage": "Warum ist eine Untersuchung im Schlaflabor notwendig",
-    "freitext": "",
-    "kategorie": "Medizin"
-  },
-  {
-    "antwort": "Eine Polygraphie ist eine ambulante Voruntersuchung, bei der wichtige Vitalparameter während des Schlafs zu Hause aufgezeichnet werden. Die Polysomnographie ist die ausführlichere Untersuchung im Schlaflabor mit zusätzlichen Messungen, wie z. B. Gehirnströmen (EEG). <a href='https://youtu.be/XEzGdDn1Uv8' target='_blank'>So wird Schlafapnoe diagnostiziert.</a> ",
-    "frage": "Was ist eine Polygraphie und was ist eine Polysomnographie",
-    "freitext": "",
-    "kategorie": "Medizin"
-  },
-  {
-    "antwort": "Für einen Termin im Schlaflabor benötigen wir vorab folgende Unterlagen:\r\n– Eine aktuelle Überweisung von Ihrem Hausarzt oder überweisenden Arzt\r\n– Den Befundbericht einer bereits durchgeführten Schlafmessung (Polygraphie)\r\n– Die unterschriebene Vereinbarung zur Kostenregelung bei Terminversäumnis. <a href='https://www.dielunge.de/schlaflabor/Ausfallhonorar.pdf' target='_blank'>Hier herunterladen</a>",
-    "frage": "Welche Unterlagen muss ich vorab einreichen, um einen Termin im Schlaflabor zu bekommen",
+    "frage": "Was soll ich zur Untersuchung im Schlaflabor mitbringen",
+    "antwort": "Bitte bringe bequeme Nachtwäsche, Hausschuhe und alle regelmäßig eingenommenen Medikamente mit.",
     "freitext": "",
     "kategorie": "Vorbereitung"
   },
   {
-    "antwort": "Eine Polygraphie ist eine ambulante Voruntersuchung, bei der wichtige Vitalparameter wie Atmung und Sauerstoffsättigung während des Schlafs zu Hause gemessen werden.\r\nSie ist notwendig, um erste Hinweise auf eine Schlafstörung zu erhalten und festzustellen, ob eine weiterführende Untersuchung im Schlaflabor erforderlich ist.",
-    "frage": "Was ist eine Polygraphie, und warum muss sie vorab durchgeführt werden",
+    "frage": "Darf ich eigene Speisen und Getränke mitbringen",
+    "antwort": "Ja, eigene Speisen und Getränke dürfen mitgebracht werden. Bitte ändere deine Ess- und Trinkgewohnheiten nicht.",
     "freitext": "",
     "kategorie": "Vorbereitung"
+  },
+  {
+    "frage": "Muss ich mein CPAP- oder BiPAP-Gerät mitbringen",
+    "antwort": "Ja, wenn du bereits ein CPAP- oder BiPAP-Gerät nutzt, bringe es bitte zur Untersuchung mit.",
+    "freitext": "",
+    "kategorie": "Vorbereitung"
+  },
+  {
+    "frage": "Darf mich eine Begleitperson ins Schlaflabor begleiten",
+    "antwort": "Nein, Begleitpersonen oder Besucher sind aus organisatorischen Gründen nicht gestattet.",
+    "freitext": "",
+    "kategorie": "Organisation"
+  },
+  {
+    "frage": "Darf ich am Untersuchungstag Make-up oder Creme verwenden",
+    "antwort": "Nein, bitte verzichte am Untersuchungstag auf Make-up, Cremes oder andere Pflegeprodukte.",
+    "freitext": "",
+    "kategorie": "Vorbereitung"
+  },
+  {
+    "frage": "Wird mein Schlaf im Schlaflabor aufgezeichnet",
+    "antwort": "Ja, während der gesamten Nacht erfolgt eine Videoaufzeichnung ausschließlich zu diagnostischen Zwecken.",
+    "freitext": "",
+    "kategorie": "Medizin"
+  },
+  {
+    "frage": "Wann endet die Untersuchung im Schlaflabor",
+    "antwort": "Die Messung endet in der Regel gegen 06:00 Uhr morgens.",
+    "freitext": "",
+    "kategorie": "Ablauf"
+  },
+  {
+    "frage": "Wann erhalte ich die Ergebnisse der Untersuchung",
+    "antwort": "Die Ergebnisse werden bei einem separaten Termin in unserer Praxis mit dir besprochen.",
+    "freitext": "",
+    "kategorie": "Nachbereitung"
+  },
+  {
+    "frage": "Soll ich den Termin zur Befundbesprechung vorher vereinbaren",
+    "antwort": "Ja, bitte vereinbare den Termin zur Befundbesprechung möglichst frühzeitig.",
+    "freitext": "",
+    "kategorie": "Organisation"
+  },
+  {
+    "frage": "Kann ich meinen Termin im Schlaflabor absagen",
+    "antwort": "Ja, eine Absage ist bis spätestens 48 Stunden vor dem Termin über Doctolib oder per E-Mail möglich.",
+    "freitext": "",
+    "kategorie": "Organisation"
+  },
+  {
+    "frage": "Was passiert, wenn ich meinen Termin nicht rechtzeitig absage",
+    "antwort": "Bei kurzfristiger Absage oder Nichterscheinen fällt ein Ausfallhonorar in Höhe von 250 Euro an.",
+    "freitext": "",
+    "kategorie": "Kosten"
+  },
+  {
+    "frage": "Fällt das Ausfallhonorar auch bei Krankheit an",
+    "antwort": "Bei unverschuldeter Verhinderung, zum Beispiel durch akute Erkrankung oder Notfall, ist auch eine kurzfristige Absage möglich.",
+    "freitext": "",
+    "kategorie": "Kosten"
+  },
+  {
+    "frage": "Warum wird ein Ausfallhonorar erhoben",
+    "antwort": "Die Bereitstellung eines Schlaflabor-Termins ist mit hohem organisatorischem und wirtschaftlichem Aufwand verbunden.",
+    "freitext": "",
+    "kategorie": "Organisation"
+  },
+  {
+    "frage": "Welche Unterlagen sind zwingend für einen Schlaflabor-Termin erforderlich",
+    "antwort": "Erforderlich sind eine aktuelle Überweisung, ein Polygraphie-Befund und die unterschriebene Ausfallhonorar-Vereinbarung.",
+    "freitext": "",
+    "kategorie": "Vorbereitung"
+  },
+  {
+    "frage": "Was passiert, wenn Unterlagen fehlen",
+    "antwort": "Ohne vollständige Unterlagen kann leider kein Termin im Schlaflabor vergeben werden.",
+    "freitext": "",
+    "kategorie": "Organisation"
+  },
+  {
+    "frage": "Warum ist eine Polygraphie vor dem Schlaflabor notwendig",
+    "antwort": "Die Polygraphie dient als Voruntersuchung, um festzustellen, ob eine weiterführende Diagnostik im Schlaflabor erforderlich ist.",
+    "freitext": "",
+    "kategorie": "Medizin"
+  },
+  {
+    "frage": "Was wird bei einer Polygraphie gemessen",
+    "antwort": "Es werden unter anderem Atmung und Sauerstoffsättigung während des Schlafs zu Hause gemessen.",
+    "freitext": "",
+    "kategorie": "Medizin"
+  }
+  ,
+  {
+    "frage": "Was ist eine Polygraphie",
+    "antwort": "Die Polygraphie ist eine schlafmedizinische Untersuchung, bei der Atmung, Herzfrequenz, Sauerstoffsättigung und Körperlage während des Schlafs zu Hause aufgezeichnet werden.",
+    "freitext": "",
+    "kategorie": "Medizin"
+  },
+  {
+    "frage": "Wie läuft eine Polygraphie ab",
+    "antwort": "Du erhältst in der Praxis ein tragbares Messgerät, legst es abends zu Hause selbst an, schläfst damit und bringst es am nächsten Tag zur Auswertung wieder mit.",
+    "freitext": "",
+    "kategorie": "Ablauf"
+  },
+  {
+    "frage": "Ist die Polygraphie schmerzhaft oder belastend",
+    "antwort": "Nein, die Polygraphie ist schmerzfrei und vergleichbar mit einer Langzeit-Blutdruckmessung.",
+    "freitext": "",
+    "kategorie": "Allgemein"
+  },
+  {
+    "frage": "Welche Werte werden bei einer Polygraphie gemessen",
+    "antwort": "Gemessen werden Atmung, Sauerstoffsättigung, Herzfrequenz und die Schlafposition.",
+    "freitext": "",
+    "kategorie": "Medizin"
+  },
+  {
+    "frage": "Was ist Schlafapnoe",
+    "antwort": "Schlafapnoe ist eine schlafbezogene Atemstörung, bei der es nachts wiederholt zu Atemaussetzern oder einer verminderten Atmung kommt.",
+    "freitext": "",
+    "kategorie": "Medizin"
+  },
+  {
+    "frage": "Was ist die häufigste Form der Schlafapnoe",
+    "antwort": "Die häufigste Form ist die obstruktive Schlafapnoe, bei der die Atemwege durch eine Erschlaffung der Rachenmuskulatur blockiert werden.",
+    "freitext": "",
+    "kategorie": "Medizin"
+  },
+  {
+    "frage": "Warum ist Schlafapnoe gesundheitlich problematisch",
+    "antwort": "Durch wiederholte Weckreaktionen sinkt die Schlafqualität, was langfristig das Risiko für Herz-Kreislauf-Erkrankungen erhöht.",
+    "freitext": "",
+    "kategorie": "Medizin"
+  },
+  {
+    "frage": "Welche typischen Symptome sprechen für eine Schlafapnoe",
+    "antwort": "Typische Symptome sind lautes Schnarchen, nicht erholsamer Schlaf, starke Tagesmüdigkeit, morgendliche Kopfschmerzen und Konzentrationsprobleme.",
+    "freitext": "",
+    "kategorie": "Medizin"
+  },
+  {
+    "frage": "Welche Folgeerkrankungen kann Schlafapnoe verursachen",
+    "antwort": "Unbehandelt erhöht Schlafapnoe unter anderem das Risiko für Bluthochdruck, Diabetes, Herzinfarkt und Schlaganfall.",
+    "freitext": "",
+    "kategorie": "Medizin"
+  },
+  {
+    "frage": "Wie wird Schlafapnoe diagnostiziert",
+    "antwort": "Die Diagnose erfolgt stufenweise über Anamnese, Fragebögen, Polygraphie und bei Bedarf eine Polysomnographie im Schlaflabor.",
+    "freitext": "",
+    "kategorie": "Diagnostik"
+  },
+  {
+    "frage": "Was ist eine Polysomnographie",
+    "antwort": "Die Polysomnographie ist eine umfassende Untersuchung im Schlaflabor, bei der zusätzlich Hirnströme, Augenbewegungen und weitere Körperfunktionen gemessen werden.",
+    "freitext": "",
+    "kategorie": "Medizin"
+  },
+  {
+    "frage": "Wie wird eine leichte Schlafapnoe behandelt",
+    "antwort": "In leichten Fällen helfen oft Gewichtsreduktion, Verzicht auf Alkohol und Nikotin sowie eine verbesserte Schlafhygiene.",
+    "freitext": "",
+    "kategorie": "Therapie"
+  },
+  {
+    "frage": "Welche Therapie wird bei schwerer Schlafapnoe eingesetzt",
+    "antwort": "Bei mittelschwerer bis schwerer Schlafapnoe wird meist eine nächtliche CPAP-Therapie mit einer Atemmaske empfohlen.",
+    "freitext": "",
+    "kategorie": "Therapie"
+  },
+  {
+    "frage": "Wie funktioniert eine CPAP-Therapie",
+    "antwort": "Über eine Maske wird kontinuierlich Luft mit leichtem Überdruck zugeführt, um die Atemwege offen zu halten und Atemaussetzer zu verhindern.",
+    "freitext": "",
+    "kategorie": "Therapie"
+  },
+  {
+    "frage": "Ist Schlafapnoe gut behandelbar",
+    "antwort": "Ja, bei rechtzeitiger Diagnose ist Schlafapnoe in der Regel gut behandelbar und die Lebensqualität kann deutlich verbessert werden.",
+    "freitext": "",
+    "kategorie": "Allgemein"
   }
 ]
