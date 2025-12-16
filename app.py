@@ -30,11 +30,9 @@ RATE_LIMIT_WINDOW_SEC = int(os.getenv("K22BOT_RL_WINDOW_SEC", "60"))
 RATE_LIMIT_MAX_REQ = int(os.getenv("K22BOT_RL_MAX_REQ", "30"))
 
 ADMIN_API_KEY = os.getenv("K22BOT_ADMIN_API_KEY", "")  # unbedingt setzen!
-
-# Optional: wenn 1, dann DB-Einträge löschen, die nicht mehr in knowledge.json stehen
 PRUNE_MISSING = os.getenv("K22BOT_PRUNE_MISSING", "0") == "1"
 
-client = OpenAI()  # OPENAI_API_KEY aus ENV
+client = OpenAI()
 
 app = Flask(__name__, static_folder="static")
 CORS(app)
@@ -61,14 +59,6 @@ def db_query(sql: str, params: Tuple[Any, ...] = ()) -> List[Dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
-def db_execmany(sql: str, params_list: List[Tuple[Any, ...]]) -> None:
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.executemany(sql, params_list)
-    conn.commit()
-    conn.close()
-
-
 # -----------------------------
 # Allgemeine Hilfsfunktionen
 # -----------------------------
@@ -91,7 +81,6 @@ def get_embedding(text: str) -> np.ndarray:
 
 
 def embeddings_batch(texts: List[str]) -> List[np.ndarray]:
-    # Ein API-Call für viele Texte (kostengünstiger als 1 Call pro Eintrag)
     resp = client.embeddings.create(input=texts, model=OPENAI_EMBED_MODEL)
     return [np.array(d.embedding, dtype=np.float32) for d in resp.data]
 
@@ -123,7 +112,7 @@ def append_log(question: str, best: Optional[Dict[str, Any]], mode: str):
         "ts": int(time.time()),
         "q_hash": sha256_short(question),
         "q_preview": question[:160],
-        "mode": mode,  # "direct" | "rag" | "fallback"
+        "mode": mode,
         "best_score": (best or {}).get("score"),
         "kategorie": (best or {}).get("kategorie"),
         "best_key_hash": (best or {}).get("key_hash"),
@@ -146,27 +135,8 @@ def append_log(question: str, best: Optional[Dict[str, Any]], mode: str):
 
 
 # -----------------------------
-# DB Init + Sync (JSON -> DB Cache)
+# JSON Laden
 # -----------------------------
-def init_db_schema(conn: sqlite3.Connection) -> None:
-    c = conn.cursor()
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS knowledge (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            key_hash TEXT UNIQUE,
-            frage TEXT,
-            antwort TEXT,
-            freitext TEXT,
-            kategorie TEXT,
-            embedding BLOB,
-            updated_at INTEGER
-        )
-    """)
-    c.execute("CREATE INDEX IF NOT EXISTS idx_knowledge_key_hash ON knowledge(key_hash)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_knowledge_updated_at ON knowledge(updated_at)")
-    conn.commit()
-
-
 def load_knowledge_json() -> List[Dict[str, str]]:
     if not os.path.exists(KNOWLEDGE_JSON):
         raise FileNotFoundError(f"{KNOWLEDGE_JSON} nicht gefunden.")
@@ -179,35 +149,123 @@ def load_knowledge_json() -> List[Dict[str, str]]:
 
     cleaned: List[Dict[str, str]] = []
     for entry in data:
-        frage = (entry.get("frage") or "").strip()
-        antwort = (entry.get("antwort") or "").strip()
-        freitext = (entry.get("freitext") or "").strip()
-        kategorie = (entry.get("kategorie") or "").strip()
         cleaned.append({
-            "frage": frage,
-            "antwort": antwort,
-            "freitext": freitext,
-            "kategorie": kategorie
+            "frage": (entry.get("frage") or "").strip(),
+            "antwort": (entry.get("antwort") or "").strip(),
+            "freitext": (entry.get("freitext") or "").strip(),
+            "kategorie": (entry.get("kategorie") or "").strip(),
         })
     return cleaned
 
 
+# -----------------------------
+# DB Schema + Migration
+# -----------------------------
+REQUIRED_COLUMNS: Dict[str, str] = {
+    "key_hash": "TEXT",
+    "frage": "TEXT",
+    "antwort": "TEXT",
+    "freitext": "TEXT",
+    "kategorie": "TEXT",
+    "embedding": "BLOB",
+    "updated_at": "INTEGER",
+}
+
+def table_exists(conn: sqlite3.Connection, name: str) -> bool:
+    c = conn.cursor()
+    c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (name,))
+    return c.fetchone() is not None
+
+def get_table_columns(conn: sqlite3.Connection, name: str) -> List[str]:
+    c = conn.cursor()
+    c.execute(f"PRAGMA table_info({name})")
+    return [row[1] for row in c.fetchall()]  # name
+
+def ensure_schema(conn: sqlite3.Connection) -> None:
+    """
+    Stellt sicher, dass die Tabelle knowledge das neue Schema hat.
+    - Wenn Tabelle nicht existiert: neu anlegen
+    - Wenn existiert: fehlende Spalten per ALTER TABLE ergänzen
+    - Wenn das fehlschlägt: Tabelle umbenennen, neu anlegen (safe fallback)
+    """
+    c = conn.cursor()
+
+    if not table_exists(conn, "knowledge"):
+        c.execute("""
+            CREATE TABLE knowledge (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                key_hash TEXT UNIQUE,
+                frage TEXT,
+                antwort TEXT,
+                freitext TEXT,
+                kategorie TEXT,
+                embedding BLOB,
+                updated_at INTEGER
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_knowledge_key_hash ON knowledge(key_hash)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_knowledge_updated_at ON knowledge(updated_at)")
+        conn.commit()
+        return
+
+    cols = get_table_columns(conn, "knowledge")
+
+    # wenn key_hash fehlt -> erst versuchen zu migrieren
+    try:
+        # fehlende Spalten ergänzen
+        for col, coltype in REQUIRED_COLUMNS.items():
+            if col not in cols:
+                c.execute(f"ALTER TABLE knowledge ADD COLUMN {col} {coltype}")
+        conn.commit()
+    except sqlite3.OperationalError:
+        # Fallback: Tabelle umbenennen und neu erstellen
+        ts = int(time.time())
+        old_name = f"knowledge_old_{ts}"
+        c.execute(f"ALTER TABLE knowledge RENAME TO {old_name}")
+
+        c.execute("""
+            CREATE TABLE knowledge (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                key_hash TEXT UNIQUE,
+                frage TEXT,
+                antwort TEXT,
+                freitext TEXT,
+                kategorie TEXT,
+                embedding BLOB,
+                updated_at INTEGER
+            )
+        """)
+        # Best effort: alte Daten übernehmen (ohne embeddings/key_hash -> wird beim Sync neu erstellt)
+        old_cols = get_table_columns(conn, old_name)
+        take = [x for x in ["frage", "antwort", "freitext", "kategorie"] if x in old_cols]
+        if take:
+            cols_sql = ", ".join(take)
+            c.execute(f"INSERT INTO knowledge ({cols_sql}) SELECT {cols_sql} FROM {old_name}")
+        conn.commit()
+
+    # Indizes erst nach Spalten sicher anlegen
+    cols = get_table_columns(conn, "knowledge")
+    if "key_hash" in cols:
+        c.execute("CREATE INDEX IF NOT EXISTS idx_knowledge_key_hash ON knowledge(key_hash)")
+    if "updated_at" in cols:
+        c.execute("CREATE INDEX IF NOT EXISTS idx_knowledge_updated_at ON knowledge(updated_at)")
+    conn.commit()
+
+
+# -----------------------------
+# Sync (JSON -> DB Cache)
+# -----------------------------
 def sync_knowledge_from_json() -> Dict[str, Any]:
-    """
-    Upsert nur neue/geänderte Einträge (per Hash über den kombinierten Text).
-    Optional: PRUNE_MISSING löscht DB-Einträge, die nicht mehr in JSON sind.
-    """
     knowledge = load_knowledge_json()
 
     conn = sqlite3.connect(DB_PATH)
-    init_db_schema(conn)
+    ensure_schema(conn)
     c = conn.cursor()
 
-    # vorhandene Hashes in DB
-    c.execute("SELECT key_hash FROM knowledge")
+    # vorhandene Hashes
+    c.execute("SELECT key_hash FROM knowledge WHERE key_hash IS NOT NULL")
     existing = {row[0] for row in c.fetchall() if row[0]}
 
-    # Zielmenge aus JSON bestimmen
     to_upsert: List[Dict[str, Any]] = []
     json_hashes: set[str] = set()
 
@@ -225,10 +283,10 @@ def sync_knowledge_from_json() -> Dict[str, Any]:
             "antwort": entry["antwort"],
             "freitext": entry["freitext"],
             "kategorie": entry["kategorie"],
-            "text": text
+            "text": text,
         })
 
-    inserted_or_updated = 0
+    upserted = 0
     if to_upsert:
         texts = [x["text"] for x in to_upsert]
         embs = embeddings_batch(texts)
@@ -249,13 +307,13 @@ def sync_knowledge_from_json() -> Dict[str, Any]:
             """, (
                 x["key_hash"], x["frage"], x["antwort"], x["freitext"], x["kategorie"], emb_bytes, now_ts
             ))
-            inserted_or_updated += 1
+            upserted += 1
 
         conn.commit()
 
     deleted = 0
     if PRUNE_MISSING:
-        c.execute("SELECT key_hash FROM knowledge")
+        c.execute("SELECT key_hash FROM knowledge WHERE key_hash IS NOT NULL")
         db_hashes = {row[0] for row in c.fetchall() if row[0]}
         to_delete = list(db_hashes - json_hashes)
         if to_delete:
@@ -263,7 +321,6 @@ def sync_knowledge_from_json() -> Dict[str, Any]:
             conn.commit()
             deleted = len(to_delete)
 
-    # Stats
     c.execute("SELECT COUNT(*) FROM knowledge")
     total = int(c.fetchone()[0])
 
@@ -271,11 +328,11 @@ def sync_knowledge_from_json() -> Dict[str, Any]:
 
     return {
         "json_count": len(knowledge),
-        "upserted": inserted_or_updated,
+        "upserted": upserted,
         "deleted": deleted,
         "db_total": total,
         "db_path": DB_PATH,
-        "knowledge_json": KNOWLEDGE_JSON
+        "knowledge_json": KNOWLEDGE_JSON,
     }
 
 
@@ -284,21 +341,18 @@ def ensure_db_ready():
     global _db_ready
     if _db_ready:
         return
-    # Einmalig synchronisieren (wichtig für Gunicorn/Heroku)
     sync_knowledge_from_json()
     _db_ready = True
 
 
 # -----------------------------
-# Retrieval aus DB (Embeddings)
+# Retrieval aus DB
 # -----------------------------
 def find_top_contexts(question: str, k: int = TOP_K) -> List[Dict[str, Any]]:
     q_emb = get_embedding(question)
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-
-    # Wir lesen nur die Felder, die wir brauchen
     c.execute("SELECT key_hash, frage, antwort, freitext, kategorie, embedding FROM knowledge")
 
     scored: List[Dict[str, Any]] = []
@@ -317,7 +371,6 @@ def find_top_contexts(question: str, k: int = TOP_K) -> List[Dict[str, Any]]:
         })
 
     conn.close()
-
     scored.sort(key=lambda x: x["score"], reverse=True)
     return scored[:k]
 
@@ -499,8 +552,6 @@ def admin_ui():
 # Start (nur lokal)
 # -----------------------------
 if __name__ == "__main__":
-    # Lokal: direkt einmal syncen
     sync_knowledge_from_json()
-
     debug = os.getenv("FLASK_DEBUG", "0") == "1"
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=debug)
